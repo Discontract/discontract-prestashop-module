@@ -279,6 +279,7 @@ class Discontractpro extends Module
       && $this->registerHook('displayAdminProductsMainStepLeftColumnMiddle')
       && $this->registerHook('displayDiscontractJobSelector')
       && $this->registerHook('displayCustomization')
+      && $this->registerHook('actionFrontControllerSetMedia')
       && DiscontractModel::getInstance()->_installDb();
   }
 
@@ -296,6 +297,7 @@ class Discontractpro extends Module
       && $this->unregisterHook('displayDiscontractJobSelector')
       && $this->unregisterHook('displayCustomization')
       && $this->unregisterHook('actionOrderStatusUpdate')
+      && $this->unregisterHook('actionFrontControllerSetMedia')
       && DiscontractModel::getInstance()->_uninstallDb();
   }
 
