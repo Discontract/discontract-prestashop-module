@@ -1,0 +1,76 @@
+#discontractpro_block_home {
+  margin-top: 10px
+}
+
+#discontractpro_block_home > .discontract-header {
+  display:flex;
+  justify-items:align-center;
+}
+
+.discontract-header > h4 {
+  font-size: 18px;
+  font-weight:600;
+}
+
+.discontract-header > input {
+  margin-right:12px;
+  margin-bottom: 5px;
+}
+
+.discontract-job {
+  font-size:18px;
+  font-weight:500;
+  margin-top:5px;
+}
+
+.discontract-price {
+  color:#00528E;
+  font-weight:600;
+}
+
+#disc-explanation-block {
+  font-size:14px;
+  margin-bottom: 10px;
+  margin-top:10px;
+}
+
+#disc-postcode-block {
+  position:relative;
+  display:none;
+  margin-top: 10px;
+}
+
+#disc-postcode-input {
+  max-width:430px;
+  width:100%;
+  display:block;
+  padding:13px;
+  font-size:14px;
+  border:1px solid #E3E3E3;
+  outline: none;
+}
+
+#discontract-loader {
+  display:none;
+  position:absolute;
+  right: 50px;
+  top:17px
+}
+
+#disc-postcode-autocomplete {
+  z-index:9999;
+  border: 1px solid #E3E3E3;
+  position: absolute;
+  width: 100%;
+  max-width: 430px;
+  background-color: white;
+  padding: 5px;
+}
+
+.disc-radio-choice {
+  display: none;
+}
+
+.disc-postcode-container {
+  position: relative;
+}

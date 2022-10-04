@@ -77,7 +77,7 @@ class Discontractpro extends Module
   {
     $this->name = 'discontractpro';
     $this->tab = 'front_office_features';
-    $this->version = '0.1.7';
+    $this->version = '0.1.8';
     $this->author = 'Discontract';
     $this->need_instance = 0;
     $this->ps_versions_compliancy = [
@@ -321,25 +321,6 @@ class Discontractpro extends Module
     return $formFactory->createNamed($this->name, Democustomfields17AdminForm::class, $data, $options);
   }
 
-  // public function hookActionCartUpdateQuantityBefore($params)
-  public function hookActionBeforeCartUpdateQty($params)
-  {
-    // die('here');
-    if (!isset($params['cart'])) {
-      return;
-    }
-    // $cartId = $params['cart']->id;
-    // $discontractCart = Tools::getValue('discontract_cart');
-    // if ($discontractCart) {
-    //   // check if customization for same shopProductId already exists in DB, if yes, do not duplicate
-    //   // or better yet get customization by placeID and increase product amount if necessary
-    //   $discontractCart = json_decode($discontractCart);
-    //   $value = json_encode($discontractCart);
-    //   $customizationId = DiscontractModel::getInstance()->createDiscontractCustomization($cartId, $discontractCart->productId, 1, $value, ($discontractCart->price->arrivalCost / 100 ));
-    //   DiscontractModel::getInstance()->addProductToCart($cartId, $discontractCart->productId, $discontractCart, $customizationId);
-    // }
-  }
-
   public function hookActionValidateCustomerAddressForm($params) {
     $context = Context::getContext();
     $cart = $context->cart;
@@ -365,6 +346,26 @@ class Discontractpro extends Module
         ));
       }
     }
+  }
+
+  public function hookActionFrontControllerSetMedia()
+  {
+      $this->context->controller->registerStylesheet(
+          $this->name . '-style',
+          'modules/'.$this->name.'/views/templates/hook/discontractpro.css',
+          [
+              'media'    => 'all',
+              'priority' => 1000,
+          ]
+      );
+      $this->context->controller->registerJavascript(
+          $this->name,
+          'modules/'.$this->name.'/views/templates/hook/discontractpro.js',
+          [
+              'position' => 'bottom',
+              'priority' => 1000,
+          ]
+      );
   }
 
   public function hookActionOrderStatusUpdate($params)
