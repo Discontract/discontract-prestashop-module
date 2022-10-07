@@ -23,10 +23,61 @@ class DiscontractModel
     $states = Db::getInstance()->executeS($sql);
     return $states;
   }
+  public function removeDiscontractProductsFromInvoice($orderInvoice) {
+    $orderId = $orderInvoice->id_order;
+    $invoiceId = $orderInvoice->id;
+    // var_dump($orderId);
+    $sql = sprintf(
+      'SELECT * FROM %s WHERE id_order = %d',
+      _DB_PREFIX_ . 'order_detail',
+      (int)$orderId
+    );
+    $products = Db::getInstance()->executeS($sql);
+    // var_dump($$products);
+    $substractTotal = 0;
+    for ($i = 0; $i < count($products); $i++) {
+      $product = $products[$i];
+      $productId = $product['product_id'];
+      $sql = sprintf(
+        'SELECT * FROM %s WHERE id_product = %d',
+        _DB_PREFIX_ . 'discontract_job_product',
+        (int)$productId
+      );
+      $job = Db::getInstance()->getRow($sql);
+      if ($job) {
+        $substractTotal += $product["total_price_tax_incl"];
+        $sql = sprintf(
+          'UPDATE %s SET `id_order_invoice` = 0 WHERE product_id = %d AND id_order = %d',
+          _DB_PREFIX_ . 'order_detail',
+          (int)$productId,
+          (int)$orderId
+        );
+        Db::getInstance()->execute($sql);
+      }
+    }
+    if ($substractTotal > 0) {
+      $total_paid_tax_excl = $orderInvoice->total_paid_tax_excl - $substractTotal;
+      $total_paid_tax_incl = $orderInvoice->total_paid_tax_incl - $substractTotal;
+      $total_products = $orderInvoice->total_products - $substractTotal;
+      $total_products_wt = $orderInvoice->total_products_wt - $substractTotal;
+      $sql = sprintf(
+        'UPDATE %s SET `total_paid_tax_excl` = %f, `total_paid_tax_incl` = %f, `total_products` = %f, `total_products_wt` = %f WHERE id_order_invoice = %d',
+        _DB_PREFIX_ . 'order_invoice',
+        (float) $total_paid_tax_excl,
+        (float) $total_paid_tax_incl,
+        (float) $total_products,
+        (float) $total_products_wt,
+        (int)$invoiceId
+      );
+      Db::getInstance()->execute($sql);
+      // var_dump($invoiceId);
+      // die($invoiceId);
+    }
+  }
   public function getOrderInfo($orderId)
   {
     $sql = 'SELECT o.`id_cart`, o.`id_address_delivery`, o.`id_address_invoice`,
-      ai.`company`,  ai.`company_code`, ai.`dni`, ai.`vat_number`, ai.`firstname`, ai.`lastname`, ai.`address1`, ai.`address2`, ai.`city`, ai.`phone`, ai.`vat_number`,
+      ai.`company`, ai.`dni`, ai.`vat_number`, ai.`firstname`, ai.`lastname`, ai.`address1`, ai.`address2`, ai.`city`, ai.`phone`, ai.`vat_number`,
       ad.`company` ad_company, ad.`firstname` ad_firstname, ad.`lastname` ad_lastname, ad.`address1` ad_address1, ad.`address2` ad_address2, ad.`city` ad_city, ad.`phone` ad_phone, ad.`vat_number` ad_vat_number,
       c.`email`
       FROM `' . _DB_PREFIX_ . 'orders` AS o 

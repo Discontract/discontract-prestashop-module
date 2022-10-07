@@ -143,6 +143,7 @@ class Discontractpro extends Module
         Configuration::updateValue('DISCONTRACT_CATEGORY_ID', $categoryId);
         Configuration::updateValue('DISCONTRACT_PURCHASED_STATES', implode(',', $purchasedStates));
         Configuration::updateValue('DISCONTRACT_DELIVERED_STATES', implode(',', $deliveredStates));
+        
         $output = $this->displayConfirmation($this->l('Settings updated'));
         $response = DiscontractApi::getInstance()->getJobs();
         $jobs = $response->jobs;
@@ -283,6 +284,7 @@ class Discontractpro extends Module
       && $this->registerHook('displayDiscontractJobSelector')
       && $this->registerHook('displayCustomization')
       && $this->registerHook('actionFrontControllerSetMedia')
+      && $this->registerHook('actionSetInvoice')
       && DiscontractModel::getInstance()->_installDb();
   }
 
@@ -301,6 +303,7 @@ class Discontractpro extends Module
       && $this->unregisterHook('displayCustomization')
       && $this->unregisterHook('actionOrderStatusUpdate')
       && $this->unregisterHook('actionFrontControllerSetMedia')
+      && $this->unregisterHook('actionSetInvoice')
       && DiscontractModel::getInstance()->_uninstallDb();
   }
 
@@ -509,6 +512,11 @@ class Discontractpro extends Module
       ->render('@PrestaShop/' . $this->name . '/admin/customfields.html.twig', [
         'form' => $form->createView(),
       ]);
+  }
+
+  public function hookActionSetInvoice($params) {
+    $orderInvoice = $params["OrderInvoice"];
+    DiscontractModel::getInstance()->removeDiscontractProductsFromInvoice($orderInvoice);
   }
 
   public function hookDisplayDiscontractJobSelector($params)
