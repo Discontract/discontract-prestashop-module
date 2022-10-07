@@ -77,7 +77,7 @@ class Discontractpro extends Module
   {
     $this->name = 'discontractpro';
     $this->tab = 'front_office_features';
-    $this->version = '0.1.8';
+    $this->version = '0.1.9';
     $this->author = 'Discontract';
     $this->need_instance = 0;
     $this->ps_versions_compliancy = [
@@ -127,6 +127,8 @@ class Discontractpro extends Module
       $configValue = (string) Tools::getValue('DISCONTRACT_API_KEY');
       $apiUrl = (string) Tools::getValue('DISCONTRACT_API_URL');
       $categoryId = (int) Tools::getValue('DISCONTRACT_CATEGORY_ID');
+      $purchasedStates = Tools::getValue('DISCONTRACT_PURCHASED_STATES');
+      $deliveredStates = Tools::getValue('DISCONTRACT_DELIVERED_STATES');
 
       // check that the value is valid
       // var_dump($categoryId);
@@ -139,19 +141,20 @@ class Discontractpro extends Module
         Configuration::updateValue('DISCONTRACT_API_URL', $apiUrl);
         Configuration::updateValue('DISCONTRACT_API_KEY', $configValue);
         Configuration::updateValue('DISCONTRACT_CATEGORY_ID', $categoryId);
+        Configuration::updateValue('DISCONTRACT_PURCHASED_STATES', implode(',', $purchasedStates));
+        Configuration::updateValue('DISCONTRACT_DELIVERED_STATES', implode(',', $deliveredStates));
         $output = $this->displayConfirmation($this->l('Settings updated'));
-      }
-    } else if (Tools::isSubmit('submit-discontract-jobs')) {
-      $response = DiscontractApi::getInstance()->getJobs();
-      $jobs = $response->jobs;
-      DiscontractModel::getInstance()->deleteJobs();
-      for ($i = 0; $i < count($jobs); $i++) {
-        $job = $jobs[$i];
-        $shopTranslation = (string) Tools::getValue(str_replace('.', '_', $job->id));
-        // var_dump($job->id);
-        // var_dump($shopTranslation);
-        // die($shopTranslation);
-        DiscontractModel::getInstance()->updateDiscontractJob($job, $shopTranslation);
+        $response = DiscontractApi::getInstance()->getJobs();
+        $jobs = $response->jobs;
+        DiscontractModel::getInstance()->deleteJobs();
+        for ($i = 0; $i < count($jobs); $i++) {
+          $job = $jobs[$i];
+          $shopTranslation = (string) Tools::getValue(str_replace('.', '_', $job->id));
+          // var_dump($job->id);
+          // var_dump($shopTranslation);
+          // die($shopTranslation);
+          DiscontractModel::getInstance()->updateDiscontractJob($job, $shopTranslation);
+        }
       }
     }
     // display any message, then the form
@@ -164,6 +167,7 @@ class Discontractpro extends Module
    */
   public function displayForm()
   {
+    $states = DiscontractModel::getInstance()->getOrderStates($this->context->language->id);
     // Init Fields form array
     $form = [
       'form' => [
@@ -195,6 +199,32 @@ class Discontractpro extends Module
             'required' => true,
           ],
           [
+            'type' => 'select',
+            'label' => $this->l('Order purchased states'),
+            'name' => 'DISCONTRACT_PURCHASED_STATES',
+            'multiple' => true,
+            'options' => array(
+              'query' => $states,
+              'name' => 'name',
+              'id' => 'id_option',
+            ),
+            'size' => 5,
+            'required' => true,
+          ],
+          [
+            'type' => 'select',
+            'label' => $this->l('Order delivered states'),
+            'name' => 'DISCONTRACT_DELIVERED_STATES',
+            'multiple' => true,
+            'options' => array(
+              'query' => $states,
+              'name' => 'name',
+              'id' => 'id_option',
+            ),
+            'size' => 5,
+            'required' => true,
+          ],
+          [
             'type' => 'categories',
             'tree' => ['id' => 0, 'selected_categories' => array((int)Tools::getValue('DISCONTRACT_CATEGORY_ID', Configuration::get('DISCONTRACT_CATEGORY_ID')))],
             'label' => $this->l('Discontract Services Category'),
@@ -204,20 +234,7 @@ class Discontractpro extends Module
           ],
         ],
         'submit' => [
-          'title' => $this->l('Save'),
-          'class' => 'btn btn-default pull-right',
-        ],
-      ],
-    ];
-
-    $form2 = [
-      'form' => [
-        'legend' => [
-          'title' => $this->l('Discontract Jobs'),
-        ],
-        'input' => [],
-        'submit' => [
-          'title' => $this->l('Sync jobs with DB'),
+          'title' => $this->l('Save & Sync Jobs'),
           'class' => 'btn btn-default pull-right',
         ],
       ],
@@ -236,33 +253,19 @@ class Discontractpro extends Module
     // Load current value into the form
     $helper->fields_value['DISCONTRACT_API_URL'] = Configuration::get('DISCONTRACT_API_URL', null, null, null, 'http://localhost:8020/api/v1');
     $helper->fields_value['DISCONTRACT_API_KEY'] = Tools::getValue('DISCONTRACT_API_KEY', Configuration::get('DISCONTRACT_API_KEY'));
+    // var_dump(Configuration::get('DISCONTRACT_PURCHASED_STATES'));
+    $helper->fields_value['DISCONTRACT_PURCHASED_STATES[]'] = explode(',', Configuration::get('DISCONTRACT_PURCHASED_STATES'));
+    $helper->fields_value['DISCONTRACT_DELIVERED_STATES[]'] = explode(',', Configuration::get('DISCONTRACT_DELIVERED_STATES'));
     $form1 = $helper->generateForm([$form]);
 
     if (Configuration::get('DISCONTRACT_API_KEY')) {
-      $helper2 = new HelperForm();
+      $jobsGenerated = '';
       $jobs = DiscontractModel::getInstance()->getDiscontractJobs();
       for ($i = 0; $i < count($jobs); $i++) {
         $job = $jobs[$i];
-        $form2['form']['input'][] = [
-          'type' => 'text',
-          'label' => $job['title_lt'] . ' (' . ($job['price'] / 100) . '€)',
-          'name' => str_replace('.', '_', $job['id_discontract_job']),
-          'size' => 20,
-          'required' => false,
-        ];
-        $helper2->fields_value[str_replace('.', '_', $job['id_discontract_job'])] = $job['title_shop_lt'];
+        $jobsGenerated .= "<tr><td style='padding:5px'>".$job['title_lt']."</td><td td style='padding:5px'>".($job['price'] / 100)."€</td></tr>";
       }
-      $helper2->table = $this->table;
-      $helper2->name_controller = $this->name;
-      $helper2->token = Tools::getAdminTokenLite('AdminModules');
-      $helper2->currentIndex = AdminController::$currentIndex . '&' . http_build_query(['configure' => $this->name]);
-      $helper2->submit_action = 'submit-discontract-jobs';
-      // Default language
-      $helper2->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
-      // Load current value into the form
-      $helper2->fields_value['DISCONTRACT_JOBS'] = Tools::getValue('DISCONTRACT_JOBS', Configuration::get('DISCONTRACT_JOBS'));
-      $form2Generated = $helper2->generateForm([$form2]);
-      return $form1 . $form2Generated;
+      return $form1 . '<table border="1" style="background-color:white">'.$jobsGenerated.'</table>';
     } else {
       return $form1;
     }
@@ -372,11 +375,9 @@ class Discontractpro extends Module
 
   public function hookActionOrderStatusUpdate($params)
   {
-    // TODO: statuses should be configurable
+    $purchasedStates = explode(',', Configuration::get('DISCONTRACT_PURCHASED_STATES'));
+    $deliveredStates = explode(',', Configuration::get('DISCONTRACT_DELIVERED_STATES'));
     $statusId = (int)$params['newOrderStatus']->id;
-    if ($statusId > 5 || $statusId < 3) {
-      return;
-    }
     $orderId  = (int)$params['id_order'];
     $data = DiscontractModel::getInstance()->getOrderInfo($orderId);
     $cartId  = (int)$data['id_cart'];
@@ -384,10 +385,8 @@ class Discontractpro extends Module
     if (!$cart) {
       return;
     }
-    // 4 issiustas
-    // 5 pristatyta
-    if ($statusId === 3) { // uzsakymas vykdomas
-      // TODO: check if cart status is reserved
+
+    if (in_array((string)$statusId, $purchasedStates)) { // car purchased
       $request = new stdClass();
       $request->billingDetails = new stdClass();
       $request->contactDetails = new stdClass();
@@ -406,19 +405,9 @@ class Discontractpro extends Module
         $response = DiscontractApi::getInstance()->purchaseCart($cart['id_discontract_cart'], $request);
         DiscontractModel::getInstance()->updateCartStatus($cartId, $response->status);
       }
-      // echo "<pre>";
-      // var_dump($cart);
-      // echo "</pre>";
-      // die('status');
-    } else if ($statusId === 4) { // issiusta
+    } else if (in_array((string)$statusId, $deliveredStates)) { // issiusta
       if ($cart["status"] === 'purchased') {
         $time = time() * 1000 + 3600 * 48 * 1000;
-        $response = DiscontractApi::getInstance()->deliverCart($cart['id_discontract_cart'], $time);
-        DiscontractModel::getInstance()->updateCartStatus($cartId, $response->status);
-      }
-    } else if ($statusId === 5) { // issiusta
-      if ($cart["status"] === 'purchased') {
-        $time = time() * 1000;
         $response = DiscontractApi::getInstance()->deliverCart($cart['id_discontract_cart'], $time);
         DiscontractModel::getInstance()->updateCartStatus($cartId, $response->status);
       }

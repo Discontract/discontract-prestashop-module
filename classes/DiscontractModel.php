@@ -13,6 +13,16 @@ class DiscontractModel
     }
     return self::$instance;
   }
+  public function getOrderStates($languageId) {
+    $sql = sprintf(
+      'SELECT id_order_state as id_option, name FROM `%s` WHERE id_lang = %d',
+      _DB_PREFIX_ . 'order_state_lang',
+      (int)$languageId
+    );
+    // echo $sql;
+    $states = Db::getInstance()->executeS($sql);
+    return $states;
+  }
   public function getOrderInfo($orderId)
   {
     $sql = 'SELECT o.`id_cart`, o.`id_address_delivery`, o.`id_address_invoice`,
