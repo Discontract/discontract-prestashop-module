@@ -2,7 +2,7 @@
 <div id="discontractpro_block_home" class="block">
   <div class="discontract-header">
     <input value="yes" type="checkbox" id="discontract-job-check" name="discontract_job_enabled"/>
-    <h4>{l s='Meistro paslauga' mod='discontractpro'}</h4>
+    <h4>{l s='PRO service' mod='discontractpro'}</h4>
   </div>
   <div class="discontract-widget">
     <input type="hidden" id="discontract_cart" name="discontract_cart" />
@@ -15,10 +15,10 @@
         {$job.title}
       </div>
     {/foreach}
-    <div id="disc-explanation-block">*kaina gali kisti nuo pasirinkto atvykimo adreso</div>
+    <div id="disc-explanation-block">*price can be adjusted according to distance</div>
     <div id="disc-postcode-block">
       <div class="disc-postcode-container">
-        <input autocomplete="off" id="disc-postcode-input" placeholder="Įveskite adresą arba pašto kodą kainos apskaičiavimui" type="text" name="post_code" />
+        <input autocomplete="off" id="disc-postcode-input" placeholder="Enter address for price calculation" type="text" name="post_code" />
         <i id="discontract-loader" class="fa fa-circle-o-notch fa-spin fa-fw spinner-icon"></i>
       </div>
       <ul id="disc-postcode-autocomplete">
